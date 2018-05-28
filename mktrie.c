@@ -76,7 +76,6 @@ static struct trie_node *first_child(struct trie_node *node, int index)
 	for (i = index; i < 16; ++i) {
 		child = node->children[i];
 		if (child) {
-			//printf("fisrt child is number %d\n", i);
 			return child;
 		}
 	}
@@ -141,9 +140,7 @@ static void trie_calculate_positions(struct trie_node *root)
 	current = 0;
 	for (i = 0; i < 5; ++i) {
 		for (n = level_first(root, i); n; n = level_next(n)) {
-			printf("calculating for level %d\n", i);
 			n->pos = current >> 4; /* Last bits are zero, ignore */
-			printf("position %d\n", current);
 			current = current + 16;
 		}
 	}
@@ -151,10 +148,8 @@ static void trie_calculate_positions(struct trie_node *root)
 	/* The value of the leaf nodes will be  stored in a separate array */
 	current = 0;
 	for (n = level_first(root, 5); n; n = level_next(n)) {
-		printf("calculating for level 5\n");
 		if (n->value)
 			n->pos = current;
-		printf("position %d\n", current);
 		current = current + unilength(n->value);
 	}
 }
@@ -199,7 +194,6 @@ static void nfdi_init(struct trie_node *nfd_root)
 		if (!um)
 			exit(1);
 		memcpy(um, mapping, i * sizeof(unsigned int));
-		printf("inserting char %u\n", unichar);
 		trie_insert(nfd_root, unichar, um);
 
 		count++;
@@ -211,9 +205,61 @@ static void nfdi_init(struct trie_node *nfd_root)
 		exit(1);
 }
 
-static void nfdi_print(struct trie_node *root)
+static void cf_init(struct trie_node *cf_root)
 {
 	FILE *file;
+	unsigned int unichar;
+	unsigned int mapping[19]; /* Magic - guaranteed not to be exceeded. */
+	char status[2];
+	char *s;
+	unsigned int *um;
+	int count;
+	int i;
+	int ret;
+
+	if (verbose > 0)
+		printf("Parsing CaseFolding.txt\n");
+	file = fopen("CaseFolding.txt", "r");
+	if (!file)
+		exit(1);
+
+	count = 0;
+	while (fgets(line, LINESIZE, file)) {
+		ret = sscanf(line, "%X; %[^;];%[^;];",
+			     &unichar, &status, buf0);
+		if (ret != 3)
+			continue;
+		if (status[0] != 'C' && status[0] != 'F')
+			/* We are doing full case folding */
+			continue;
+
+		s = buf0;
+
+		/* decode the case folding into UTF-32 */
+		i = 0;
+		while (*s) {
+			mapping[i] = strtoul(s, &s, 16);
+			i++;
+		}
+		mapping[i++] = 0;
+
+		um = malloc(i * sizeof(unsigned int));
+		if (!um)
+			exit(1);
+		memcpy(um, mapping, i * sizeof(unsigned int));
+		trie_insert(cf_root, unichar, um);
+
+		count++;
+	}
+	fclose(file);
+	if (verbose > 0)
+		printf("Found %d entries\n", count);
+	if (count == 0)
+		exit(1);
+}
+
+static void trie_print(struct trie_node *root, char *trie_name, FILE *file)
+{
 	struct trie_node *n = root;
 	char range[5];
 	int i;
@@ -222,13 +268,10 @@ static void nfdi_print(struct trie_node *root)
 
 	if (verbose > 0)
 		printf("Printing to unicode.c\n");
-	file = fopen("unicode.c", "w");
-	if (!file)
-		exit(1);
 
 	trie_calculate_positions(root);
 
-	fprintf(file, "u16 apfs_nfd_trie[] = {");
+	fprintf(file, "u16 apfs_%s_trie[] = {", trie_name);
 	for (i = 0; i < 5; ++i) {
 		for (n = level_first(root, i); n; n = level_next(n)) {
 			int j;
@@ -252,7 +295,7 @@ static void nfdi_print(struct trie_node *root)
 	}
 	fprintf(file, "\n};");
 
-	fprintf(file, "\n\nunicode_t apfs_nfd[] = {");
+	fprintf(file, "\n\nunicode_t apfs_%s[] = {", trie_name);
 	count = 0;
 	for (n = level_first(root, 5); n; n = level_next(n)) {
 		unsigned int *curr;
@@ -271,7 +314,12 @@ static void nfdi_print(struct trie_node *root)
 
 int main()
 {
-	struct trie_node *nfd_root;
+	struct trie_node *nfd_root, *cf_root;
+	FILE *out;
+
+	out = fopen("unicode.c", "w");
+	if (!out)
+		exit(1);
 
 	nfd_root = calloc(1, sizeof(*nfd_root));
 	if (!nfd_root)
@@ -279,7 +327,17 @@ int main()
 	nfd_root->depth = 0;
 
 	nfdi_init(nfd_root);
-	nfdi_print(nfd_root);
+	trie_print(nfd_root, "nfd", out);
+
+	fprintf(out, "\n\n");
+
+	cf_root = calloc(1, sizeof(*cf_root));
+	if (!cf_root)
+		exit(1);
+	cf_root->depth = 0;
+
+	cf_init(cf_root);
+	trie_print(cf_root, "cf", out);
 	return 0;
 }
 
