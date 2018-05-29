@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdbool.h>
 
 #define LINESIZE	1024
 
@@ -312,6 +313,65 @@ static void trie_print(struct trie_node *root, char *trie_name, FILE *file)
 	fprintf(file, "\n};");
 }
 
+/* Get the partial nfd decomposition for @unichar in the current iteration */
+static unsigned int *get_current_nfd(struct trie_node *nfdi_root,
+				     unsigned int unichar)
+{
+	struct trie_node *node = nfdi_root;
+	int off;
+	int i;
+
+	for (i = 4; i >= 0; --i) {
+		int index = (unichar >> (4 * i)) & 0xf;
+		node = node->children[index];
+		if (!node)
+			return NULL;
+	}
+	return node->value;
+}
+
+/* Iterate the unicode decompositions as much as needed */
+static void nfdi_iterate(struct trie_node *nfdi_root)
+{
+	struct trie_node *n;
+	unsigned int *unichar;
+	unsigned int mapping[19]; /* Magic - guaranteed not to be exceeded. */
+	bool unchanged = true;
+
+	for (n = level_first(nfdi_root, 5); n; n = level_next(n)) {
+		unsigned int *map_cursor = mapping;
+		unsigned int map_size;
+
+		for (unichar = n->value; *unichar; ++unichar) {
+			unsigned int *decomp;
+			int len;
+
+			decomp = get_current_nfd(nfdi_root, *unichar);
+			if (decomp) {
+				unchanged = false;
+				len = unilength(decomp);
+			} else {
+				decomp = unichar;
+				len = 1;
+			}
+			memcpy(map_cursor, decomp, len * sizeof(unsigned int));
+			map_cursor += len;
+		}
+		*map_cursor = 0;
+		++map_cursor;
+		map_size = (map_cursor - mapping) * sizeof(unsigned int);
+
+		free(n->value);
+		n->value = malloc(map_size);
+		if (!n->value)
+			exit(1);
+		memcpy(n->value, mapping, map_size);
+	}
+
+	if (!unchanged)
+		nfdi_iterate(nfdi_root);
+}
+
 int main()
 {
 	struct trie_node *nfd_root, *cf_root;
@@ -327,6 +387,7 @@ int main()
 	nfd_root->depth = 0;
 
 	nfdi_init(nfd_root);
+	nfdi_iterate(nfd_root);
 	trie_print(nfd_root, "nfd", out);
 
 	fprintf(out, "\n\n");
