@@ -279,7 +279,7 @@ static void trie_print(struct trie_node *root, char *trie_name, FILE *file)
 
 	trie_calculate_positions(root);
 
-	fprintf(file, "u16 apfs_%s_trie[] = {", trie_name);
+	fprintf(file, "static u16 apfs_%s_trie[] = {", trie_name);
 	for (i = 0; i < 5; ++i) {
 		for (n = level_first(root, i); n; n = level_next(n)) {
 			int j;
@@ -303,7 +303,7 @@ static void trie_print(struct trie_node *root, char *trie_name, FILE *file)
 	}
 	fprintf(file, "\n};");
 
-	fprintf(file, "\n\nunicode_t apfs_%s[] = {", trie_name);
+	fprintf(file, "\n\nstatic unicode_t apfs_%s[] = {", trie_name);
 	count = 0;
 	for (n = level_first(root, 5); n; n = level_next(n)) {
 		unsigned int *curr;
