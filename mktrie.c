@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include <assert.h>
 
 #define LINESIZE	1024
 
@@ -149,9 +150,15 @@ static void trie_calculate_positions(struct trie_node *root)
 	/* The value of the leaf nodes will be  stored in a separate array */
 	current = 0;
 	for (n = level_first(root, 5); n; n = level_next(n)) {
-		if (n->value)
-			n->pos = current;
-		current = current + unilength(n->value);
+		int len = unilength(n->value);
+		if (n->value) {
+			/* Save both position and length of the value */
+			assert(len < 8);
+			assert(!(current & 0xe000));
+
+			n->pos = (current << 3) + len;
+		}
+		current += len;
 	}
 }
 
