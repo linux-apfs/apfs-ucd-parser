@@ -1,5 +1,2 @@
-*
-!*.c
+mktrie
 unicode.c
-!.gitignore
-!Makefile

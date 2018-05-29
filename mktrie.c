@@ -175,7 +175,7 @@ static void nfdi_init(struct trie_node *nfd_root)
 
 	if (verbose > 0)
 		printf("Parsing UnicodeData.txt\n");
-	file = fopen("UnicodeData.txt", "r");
+	file = fopen("ucd/UnicodeData.txt", "r");
 	if (!file)
 		exit(1);
 
@@ -227,7 +227,7 @@ static void cf_init(struct trie_node *cf_root)
 
 	if (verbose > 0)
 		printf("Parsing CaseFolding.txt\n");
-	file = fopen("CaseFolding.txt", "r");
+	file = fopen("ucd/CaseFolding.txt", "r");
 	if (!file)
 		exit(1);
 
