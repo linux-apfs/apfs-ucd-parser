@@ -1,9 +1,11 @@
-unicode.c: mktrie
-	./mktrie
+all: build build/unicode.c
 
-mktrie: mktrie.c
-	gcc -o mktrie mktrie.c
+build:
+	mkdir build
+build/unicode.c: build/mktrie
+	build/mktrie
+build/mktrie: mktrie.c
+	gcc -o build/mktrie mktrie.c
 
 clean:
-	rm -f mktrie
-	rm -f unicode.c
+	rm -Rf build
