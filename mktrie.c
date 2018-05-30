@@ -132,7 +132,7 @@ static int unilength(unsigned int *um)
 	return length;
 }
 
-static void trie_calculate_positions(struct trie_node *root)
+static void trie_calculate_positions(struct trie_node *root, bool is_ccc)
 {
 	struct trie_node *n;
 	unsigned int current;
@@ -150,14 +150,24 @@ static void trie_calculate_positions(struct trie_node *root)
 	/* The value of the leaf nodes will be  stored in a separate array */
 	current = 0;
 	for (n = level_first(root, 5); n; n = level_next(n)) {
-		int len = unilength(n->value);
-		if (n->value) {
-			/* Save both position and length of the value */
-			assert(len < 8);
-			assert(!(current & 0xe000));
+		int len;
 
-			n->pos = (current << 3) + len;
+		if (!n->value)
+			continue;
+
+		if (is_ccc) {
+			/* no data array, the 'pos' is just the value */
+			n->pos = n->value[0];
+			continue;
 		}
+
+		len = unilength(n->value);
+
+		/* Save both position and length of the value */
+		assert(len < 8);
+		assert(!(current & 0xe000));
+		n->pos = (current << 3) + len;
+
 		current += len;
 	}
 }
@@ -266,7 +276,42 @@ static void cf_init(struct trie_node *cf_root)
 		exit(1);
 }
 
-static void trie_print(struct trie_node *root, char *trie_name, FILE *file)
+static void ccc_init(struct trie_node *ccc_root)
+{
+	FILE *file;
+	unsigned int unichar;
+	unsigned int *ccc;
+	int count;
+	int ret;
+
+	if (verbose > 0)
+		printf("Parsing UnicodeData.txt\n");
+	file = fopen("ucd/UnicodeData.txt", "r");
+	if (!file)
+		exit(1);
+
+	count = 0;
+	while (fgets(line, LINESIZE, file)) {
+		ccc = malloc(sizeof(*ccc));
+		ret = sscanf(line, "%X;%*[^;];%*[^;];%d", &unichar, ccc);
+		if (ret != 2)
+			continue;
+		if (*ccc == 0) /* This is the default value */
+			continue;
+
+		trie_insert(ccc_root, unichar, ccc);
+
+		count++;
+	}
+	fclose(file);
+	if (verbose > 0)
+		printf("Found %d entries\n", count);
+	if (count == 0)
+		exit(1);
+}
+
+static void trie_print(struct trie_node *root, char *trie_name, FILE *file,
+		       bool is_ccc)
 {
 	struct trie_node *n = root;
 	char range[5];
@@ -277,9 +322,13 @@ static void trie_print(struct trie_node *root, char *trie_name, FILE *file)
 	if (verbose > 0)
 		printf("Printing to unicode.c\n");
 
-	trie_calculate_positions(root);
+	trie_calculate_positions(root, is_ccc);
 
-	fprintf(file, "static u16 apfs_%s_trie[] = {", trie_name);
+	if (is_ccc)
+		fprintf(file, "static u8 apfs_%s_trie[] = {", trie_name);
+	else
+		fprintf(file, "static u16 apfs_%s_trie[] = {", trie_name);
+
 	for (i = 0; i < 5; ++i) {
 		for (n = level_first(root, i); n; n = level_next(n)) {
 			int j;
@@ -295,13 +344,21 @@ static void trie_print(struct trie_node *root, char *trie_name, FILE *file)
 					fprintf(file, "\n\t");
 				if (n->children[j])
 					pos = n->children[j]->pos;
-				fprintf(file, "0x%.4x,", pos);
+
+				if (is_ccc)
+					fprintf(file, "0x%.2x,", pos);
+				else
+					fprintf(file, "0x%.4x,", pos);
+
 				if (j % 8 != 7)
 					fprintf(file, " ");
 			}
 		}
 	}
 	fprintf(file, "\n};");
+
+	if (is_ccc) /* No data array for ccc */
+		return;
 
 	fprintf(file, "\n\nstatic unicode_t apfs_%s[] = {", trie_name);
 	count = 0;
@@ -381,7 +438,7 @@ static void nfdi_iterate(struct trie_node *nfdi_root)
 
 int main()
 {
-	struct trie_node *nfd_root, *cf_root;
+	struct trie_node *nfd_root, *cf_root, *ccc_root;
 	FILE *out;
 
 	out = fopen("build/unicode.c", "w");
@@ -395,7 +452,7 @@ int main()
 
 	nfdi_init(nfd_root);
 	nfdi_iterate(nfd_root);
-	trie_print(nfd_root, "nfd", out);
+	trie_print(nfd_root, "nfd", out, false /* is_ccc */);
 
 	fprintf(out, "\n\n");
 
@@ -405,7 +462,17 @@ int main()
 	cf_root->depth = 0;
 
 	cf_init(cf_root);
-	trie_print(cf_root, "cf", out);
+	trie_print(cf_root, "cf", out, false /* is_ccc */);
+
+	fprintf(out, "\n\n");
+
+	ccc_root = calloc(1, sizeof(*ccc_root));
+	if (!ccc_root)
+		exit(1);
+	ccc_root->depth = 0;
+
+	ccc_init(ccc_root);
+	trie_print(ccc_root, "ccc", out, true /* is_ccc */);
 	return 0;
 }
 
