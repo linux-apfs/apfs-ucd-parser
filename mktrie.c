@@ -441,7 +441,7 @@ int main()
 	struct trie_node *nfd_root, *cf_root, *ccc_root;
 	FILE *out;
 
-	out = fopen("build/unicode.c", "w");
+	out = fopen("build/unicode.c.tmp", "w");
 	if (!out)
 		exit(1);
 
