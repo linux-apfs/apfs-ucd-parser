@@ -325,23 +325,23 @@ static void trie_print(struct trie_node *root, char *trie_name, FILE *file,
 	trie_calculate_positions(root, is_ccc);
 
 	if (is_ccc)
-		fprintf(file, "static u8 apfs_%s_trie[] = {", trie_name);
+		fprintf(file, "static u8 apfs_%s_trie[] = {\n", trie_name);
 	else
-		fprintf(file, "static u16 apfs_%s_trie[] = {", trie_name);
+		fprintf(file, "static u16 apfs_%s_trie[] = {\n", trie_name);
 
 	for (i = 0; i < 5; ++i) {
 		for (n = level_first(root, i); n; n = level_next(n)) {
 			int j;
 
 			get_range(n, range);
-			fprintf(file, "\n\t/* Node for range 0x%.5s */",
+			fprintf(file, "\t/* Node for range 0x%.5s */\n",
 				range);
 
 			for (j = 0; j < 16; j++) {
 				unsigned int pos = 0;
 
 				if (j % 8 == 0)
-					fprintf(file, "\n\t");
+					fprintf(file, "\t");
 				if (n->children[j])
 					pos = n->children[j]->pos;
 
@@ -352,29 +352,35 @@ static void trie_print(struct trie_node *root, char *trie_name, FILE *file,
 
 				if (j % 8 != 7)
 					fprintf(file, " ");
+				else
+					fprintf(file, "\n");
 			}
 		}
 	}
-	fprintf(file, "\n};");
+	fseek(file, -1, SEEK_CUR); /* Remove the final space or newline */
+	fprintf(file, "\n};\n");
 
 	if (is_ccc) /* No data array for ccc */
 		return;
 
-	fprintf(file, "\n\nstatic unicode_t apfs_%s[] = {", trie_name);
+	fprintf(file, "\nstatic unicode_t apfs_%s[] = {\n", trie_name);
 	count = 0;
 	for (n = level_first(root, 5); n; n = level_next(n)) {
 		unsigned int *curr;
 
 		for (curr = n->value; *curr; curr++) {
 			if (count % 6 == 0)
-				fprintf(file, "\n\t");
+				fprintf(file, "\t");
 			fprintf(file, "0x%.6x,", *curr);
 			count++;
 			if (count % 6 != 0)
 				fprintf(file, " ");
+			else
+				fprintf(file, "\n");
 		}
 	}
-	fprintf(file, "\n};");
+	fseek(file, -1, SEEK_CUR); /* Remove the final space or newline */
+	fprintf(file, "\n};\n");
 }
 
 /* Get the partial nfd decomposition for @unichar in the current iteration */
@@ -454,7 +460,7 @@ int main()
 	nfdi_iterate(nfd_root);
 	trie_print(nfd_root, "nfd", out, false /* is_ccc */);
 
-	fprintf(out, "\n\n");
+	fprintf(out, "\n");
 
 	cf_root = calloc(1, sizeof(*cf_root));
 	if (!cf_root)
@@ -464,7 +470,7 @@ int main()
 	cf_init(cf_root);
 	trie_print(cf_root, "cf", out, false /* is_ccc */);
 
-	fprintf(out, "\n\n");
+	fprintf(out, "\n");
 
 	ccc_root = calloc(1, sizeof(*ccc_root));
 	if (!ccc_root)

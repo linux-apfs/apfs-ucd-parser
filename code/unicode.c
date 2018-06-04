@@ -303,7 +303,8 @@ int apfs_normalize_next(struct apfs_unicursor *cursor, unicode_t *next)
 	if (buflen > cursor->buf_len) {
 		/* We need a bigger buffer for this sequence of chars */
 		kfree(cursor->buf);
-		cursor->buf = kmalloc(buflen * sizeof(unicode_t), GFP_KERNEL);
+		cursor->buf = kmalloc_array(buflen, sizeof(unicode_t),
+					    GFP_KERNEL);
 		if (!cursor->buf)
 			return -ENOMEM;
 		cursor->buf_len = buflen;
