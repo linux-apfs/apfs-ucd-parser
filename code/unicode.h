@@ -1,15 +1,3 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-/*
- *  linux/fs/apfs/unicode.h
- *
- * Copyright (C) 2018 Ernesto A. Fernández <ernesto.mnd.fernandez@gmail.com>
- */
-
-#ifndef _APFS_UNICODE_H
-#define _APFS_UNICODE_H
-
-#include <linux/nls.h>
-
 /*
  * This structure helps apfs_normalize_next() to retrieve one normalized
  * (and case-folded) UTF-32 character at a time from a UTF-8 string.

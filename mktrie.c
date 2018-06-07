@@ -447,7 +447,7 @@ int main()
 	struct trie_node *nfd_root, *cf_root, *ccc_root;
 	FILE *out;
 
-	out = fopen("build/unicode.c.tmp", "w");
+	out = fopen("unicode.c.tmp", "w");
 	if (!out)
 		exit(1);
 
@@ -455,20 +455,26 @@ int main()
 	if (!nfd_root)
 		exit(1);
 	nfd_root->depth = 0;
-
 	nfdi_init(nfd_root);
 	nfdi_iterate(nfd_root);
 	trie_print(nfd_root, "nfd", out, false /* is_ccc */);
 
 	fprintf(out, "\n");
 
+	#ifdef CONFIG_TEST
+	/* The tests are only for NFD, case folding data should be empty */
+	fprintf(out, "static u16 apfs_cf_trie[] = {"
+		     "0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0"
+		     "};\n");
+	fprintf(out, "static unicode_t apfs_cf[] = {};\n");
+	#else /* CONFIG_TEST */
 	cf_root = calloc(1, sizeof(*cf_root));
 	if (!cf_root)
 		exit(1);
 	cf_root->depth = 0;
-
 	cf_init(cf_root);
 	trie_print(cf_root, "cf", out, false /* is_ccc */);
+	#endif /* CONFIG_TEST */
 
 	fprintf(out, "\n");
 
@@ -476,9 +482,9 @@ int main()
 	if (!ccc_root)
 		exit(1);
 	ccc_root->depth = 0;
-
 	ccc_init(ccc_root);
 	trie_print(ccc_root, "ccc", out, true /* is_ccc */);
+
 	return 0;
 }
 
