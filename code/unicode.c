@@ -299,3 +299,11 @@ out:
 	return 0;
 }
 
+/*
+ * The following arrays were built with data provided by the Unicode Standard,
+ * version 9.0.
+ *
+ * Copyright (C) 1991-2018 Unicode, Inc.  All rights reserved.  Distributed
+ * under the Terms of Use in http://www.unicode.org/copyright.html.
+ */
+

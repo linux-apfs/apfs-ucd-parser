@@ -1,3 +1,10 @@
+/*
+ * Copyright (C) 2018 Ernesto A. Fernández <ernesto.mnd.fernandez@gmail.com>
+ *
+ * A small part of the code was taken from a version of the mkutf8data script
+ * by Olaf Weber (https://marc.info/?l=linux-fsdevel&m=152584896931191&w=2).
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
