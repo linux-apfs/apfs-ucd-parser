@@ -1,0 +1,20 @@
+APFS UCD PARSER
+===============
+
+This is a simple script to parse the NFD and case folding data provided by
+Unicode 9.0.0 [1] into tries represented as C arrays. It also runs the
+normalization tests at [1] and prints the results to build/test.out. The
+unicode 9.0 data is inside the ucd directory; it can be simply replaced by
+another version if such a thing is needed.
+
+The code produced by running make will become the unicode.c and unicode.h
+files of the linux-apfs module [2]. All future changes to the unicode
+implementation should go through this tree before being applied to linux-apfs,
+so that tests can be run.
+
+A small part of the code was taken from a version of the mkutf8data script
+by Olaf Weber [3].
+
+[1] www.unicode.org/Public/9.0.0/ucd
+[2] https://github.com/eafer/linux-apfs
+[3] https://marc.info/?l=linux-fsdevel&m=152584896931191&w=2
