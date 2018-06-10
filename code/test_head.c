@@ -11,8 +11,13 @@
 typedef uint8_t u8;
 typedef uint16_t u16;
 
+#define likely(x)      __builtin_expect(!!(x), 1)
+
 #define swap(a, b) \
 	do { typeof(a) __tmp = (a); (a) = (b); (b) = __tmp; } while (0)
+
+#define isascii(c) (((unsigned char)(c))<=0x7f)
+#define tolower(c) (c)	/* We don't test case folding */
 
 static inline void kfree(void *ptr)
 {

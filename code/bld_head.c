@@ -13,5 +13,6 @@
 #include <linux/slab.h>
 #include <linux/types.h>
 #include <linux/nls.h>
+#include <linux/ctype.h>
 #include "unicode.h"
 
