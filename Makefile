@@ -10,7 +10,7 @@ $(SCR_DIR):
 $(OUT_DIR)/test.out: $(SCR_DIR)/unitest
 	$(SCR_DIR)/unitest > $(OUT_DIR)/test.out
 $(SCR_DIR)/unitest: $(SCR_DIR)/unicode.c $(SCR_DIR)/unicode.h
-	gcc -o $(SCR_DIR)/unitest $(SCR_DIR)/unicode.c
+	gcc $(CFLAGS) -o $(SCR_DIR)/unitest $(SCR_DIR)/unicode.c
 
 # We want to patch together two different versions of the generated source code:
 # one for the kernel module, and another for running tests in user space
@@ -29,9 +29,9 @@ $(SCR_DIR)/unicode.h: code/unicode.h code/test_head.h
 	cat code/test_head.h code/unicode.h > $(SCR_DIR)/unicode.h
 
 $(SCR_DIR)/mktrie: mktrie.c
-	gcc -o $(SCR_DIR)/mktrie mktrie.c
+	gcc $(CFLAGS) -o $(SCR_DIR)/mktrie mktrie.c
 $(SCR_DIR)/mktrie_test: mktrie.c
-	gcc -DCONFIG_TEST -o $(SCR_DIR)/mktrie_test mktrie.c
+	gcc $(CFLAGS) -DCONFIG_TEST -o $(SCR_DIR)/mktrie_test mktrie.c
 
 clean:
 	rm -Rf $(OUT_DIR)

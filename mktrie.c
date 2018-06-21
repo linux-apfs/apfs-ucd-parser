@@ -251,7 +251,7 @@ static void cf_init(struct trie_node *cf_root)
 	count = 0;
 	while (fgets(line, LINESIZE, file)) {
 		ret = sscanf(line, "%X; %[^;];%[^;];",
-			     &unichar, &status, buf0);
+			     &unichar, status, buf0);
 		if (ret != 3)
 			continue;
 		if (status[0] != 'C' && status[0] != 'F')
@@ -323,7 +323,6 @@ static void trie_print(struct trie_node *root, char *trie_name, FILE *file,
 	struct trie_node *n = root;
 	char range[5];
 	int i;
-	unsigned int value_pos = 0;
 	int count;
 
 	if (verbose > 0)
@@ -395,7 +394,6 @@ static unsigned int *get_current_nfd(struct trie_node *nfdi_root,
 				     unsigned int unichar)
 {
 	struct trie_node *node = nfdi_root;
-	int off;
 	int i;
 
 	for (i = 4; i >= 0; --i) {
