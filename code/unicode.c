@@ -71,9 +71,9 @@ static int apfs_trie_find(void *trie, unicode_t key, void *result, bool is_ccc)
  * @utf32char:	character to decompose
  * @buf:	buffer to store the result. Must be large enough!
  *
- * Returns 0 if @utf32char is not Hangul, otherwise returns the length of the
- * decomposition. Can be called with @buf == NULL to compute the size of the
- * buffer required.
+ * Returns 0 if @utf32char is not precomposed Hangul, otherwise returns the
+ * length of the decomposition. Can be called with @buf == NULL to compute
+ * the size of the buffer required.
  *
  * This function was adapted from sample code in section 3.12 of the
  * Unicode Standard, version 9.0.
