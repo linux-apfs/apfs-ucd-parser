@@ -8,10 +8,9 @@
 #define ENOMEM 1
 #define EINVAL 2
 
-typedef uint8_t u8;
 typedef uint16_t u16;
 
-#define likely(x)      __builtin_expect(!!(x), 1)
+#define likely(x)	__builtin_expect(!!(x), 1)
 
 #define swap(a, b) \
 	do { typeof(a) __tmp = (a); (a) = (b); (b) = __tmp; } while (0)
@@ -145,7 +144,7 @@ static int unilength(unsigned int *um)
 /* Test if @str normalizes to @norm and print the result */
 void test_normalization(unicode_t *str, unicode_t *norm)
 {
-	struct apfs_unicursor *cursor;
+	struct apfs_unicursor cursor;
 	int maxlen;
 	u8 *utf8str, *utf8curr;
 
@@ -168,16 +167,11 @@ void test_normalization(unicode_t *str, unicode_t *norm)
 	}
 	*utf8curr = 0;
 
-	cursor = apfs_init_unicursor(utf8str);
+	apfs_init_unicursor(&cursor, utf8str);
 	while (1) {
 		unicode_t curr;
-		int ret;
 
-		ret = apfs_normalize_next(cursor, &curr);
-		if (ret) {
-			printf("FAIL: invalid UTF-8 for string %s\n", utf8str);
-			break;
-		}
+		curr = apfs_normalize_next(&cursor);
 		if (curr != *norm) {
 			printf("FAIL: wrong NFD for string %s\n", utf8str);
 			break;
@@ -188,7 +182,6 @@ void test_normalization(unicode_t *str, unicode_t *norm)
 		}
 		norm++;
 	}
-	apfs_free_unicursor(cursor);
 
 out:
 	free(utf8str);
