@@ -18,8 +18,8 @@ $(OUT_DIR)/unicode.c: $(SCR_DIR)/mktrie code/unicode.c code/bld_head.c
 	$(SCR_DIR)/mktrie
 	cat code/bld_head.c code/unicode.c unicode.c.tmp > $(OUT_DIR)/unicode.c
 	rm -f unicode.c.tmp
-$(SCR_DIR)/unicode.c: $(SCR_DIR)/mktrie_test code/unicode.c code/test_head.c
-	$(SCR_DIR)/mktrie_test
+$(SCR_DIR)/unicode.c: $(SCR_DIR)/mktrie code/unicode.c code/test_head.c
+	$(SCR_DIR)/mktrie
 	cat code/test_head.c code/unicode.c unicode.c.tmp > $(SCR_DIR)/unicode.c
 	rm -f unicode.c.tmp
 
@@ -30,8 +30,6 @@ $(SCR_DIR)/unicode.h: code/unicode.h code/test_head.h
 
 $(SCR_DIR)/mktrie: mktrie.c
 	gcc $(CFLAGS) -o $(SCR_DIR)/mktrie mktrie.c
-$(SCR_DIR)/mktrie_test: mktrie.c
-	gcc $(CFLAGS) -DCONFIG_TEST -o $(SCR_DIR)/mktrie_test mktrie.c
 
 clean:
 	rm -Rf $(OUT_DIR)

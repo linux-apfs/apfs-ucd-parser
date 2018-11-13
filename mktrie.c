@@ -466,20 +466,12 @@ int main()
 
 	fprintf(out, "\n");
 
-	#ifdef CONFIG_TEST
-	/* The tests are only for NFD, case folding data should be empty */
-	fprintf(out, "static u16 apfs_cf_trie[] = {"
-		     "0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0"
-		     "};\n");
-	fprintf(out, "static unicode_t apfs_cf[] = {};\n");
-	#else /* CONFIG_TEST */
 	cf_root = calloc(1, sizeof(*cf_root));
 	if (!cf_root)
 		exit(1);
 	cf_root->depth = 0;
 	cf_init(cf_root);
 	trie_print(cf_root, "cf", out, false /* is_ccc */);
-	#endif /* CONFIG_TEST */
 
 	fprintf(out, "\n");
 

@@ -171,7 +171,7 @@ void test_normalization(unicode_t *str, unicode_t *norm)
 	while (1) {
 		unicode_t curr;
 
-		curr = apfs_normalize_next(&cursor);
+		curr = apfs_normalize_next(&cursor, false /* case_fold */);
 		if (curr != *norm) {
 			printf("FAIL: wrong NFD for string %s\n", utf8str);
 			break;
